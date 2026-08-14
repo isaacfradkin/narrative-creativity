@@ -35,6 +35,7 @@ Example
 
 import argparse
 import re
+import time
 from typing import List, Tuple
 
 import openpyxl
@@ -161,9 +162,11 @@ def main():
         for story, _ in story_cols:
             sentences = split_sentences(rec.get(story))
             if len(sentences) < 3:              # need a before and an after -> >=3 sentences
-                print(f"  [{ri}/{len(rows)}] {pid}/{story}: {len(sentences)} sentence(s) -> skip")
+                print(f"  [{ri}/{len(rows)}] {pid}/{story}: {len(sentences)} sentence(s) -> skip",
+                      flush=True)
                 continue
-            print(f"  [{ri}/{len(rows)}] {pid}/{story}: {len(sentences)} sentences")
+            print(f"  [{ri}/{len(rows)}] {pid}/{story}: {len(sentences)} sentences", flush=True)
+            t_story = time.perf_counter()
 
             for t, s1, s2, s3_next, s3_all in windows(sentences):
                 # Alternatives depend only on S1, so generate them ONCE and reuse
@@ -195,6 +198,9 @@ def main():
                     for i, (alt_text, lp) in enumerate(r["prior_details"], 1):
                         alt_rows.append({**base, "role": "alternative", "alt_id": i,
                                          "sentence": alt_text, "log_prob": round(lp, 4)})
+
+            print(f"  [{ri}/{len(rows)}] {pid}/{story}: done in "
+                  f"{time.perf_counter() - t_story:.1f}s", flush=True)
 
     base = re.sub(r'\.(xlsx|csv)$', '', args.output)
     write_simple_xlsx(debug_rows, base + ".xlsx")

@@ -1,0 +1,12 @@
+# Reading/writing the .xlsx story files (run_texts.py)
+openpyxl>=3.1
+
+# Backend "hf" (distilgpt2) — fast, for development/plumbing only
+torch>=2.2
+transformers>=4.40
+accelerate>=0.30
+sentencepiece
+protobuf
+
+# Backend "llamacpp" (Hebrew-Mistral-7B GGUF) — the model used for the study
+llama-cpp-python>=0.2.70

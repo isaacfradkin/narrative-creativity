@@ -1,0 +1,114 @@
+\documentclass[11pt]{article}
+\usepackage[margin=2.1cm]{geometry}
+\usepackage{amsmath,amssymb}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage[T1]{fontenc}
+\usepackage{newpxtext}
+\usepackage{newpxmath}
+\usepackage{microtype}
+\usepackage{algpseudocode}
+\usepackage{algorithm}
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{4pt}
+\newcommand{\col}[1]{\texttt{#1}}
+\renewcommand{\arraystretch}{1.25}
+
+\title{\vspace{-1.5cm}\textbf{Narrative Twist (NT) --- method \& output columns}}
+\date{}
+\begin{document}
+\maketitle
+\vspace{-1.1cm}
+
+\section*{What the algorithm computes}
+For a \textbf{target sentence} $S_2$ in a story, we ask how much it is a real
+narrative twist: does $S_2$ make the continuation $S_3$ far more likely than a
+\emph{banal} sentence would? We compare the real continuation probability
+(\emph{posterior}) to the average over model-generated banal alternatives
+(\emph{prior}):
+\[
+\mathrm{nt}=\log\frac{P(S_3\mid S_1,S_2)}{Q},
+\qquad
+Q=\frac{1}{n}\sum_{i=1}^{n}P\!\left(S_3\mid S_1,S_2^{*i}\right).
+\]
+A high \col{nt} means $S_2$ is a strong twist. Sentence probabilities are
+\textbf{per token} (length-normalised, perplexity-style):
+$\;\log P(S_3\mid\cdot)=\frac1m\sum_{j=1}^{m}\log P(\text{token}_j\mid \text{tokens}_{<j})$.
+
+\begin{algorithm}[h]
+\begin{algorithmic}[1]
+\State split the story into sentences $S_1,\dots,S_k$
+\For{each target $S_t$ with $t=2,\dots,k-1$} \Comment{needs a sentence before and after}
+  \State $S_1 \gets S_1\,\cdots\,S_{t-1}$ \Comment{context = all preceding sentences}
+  \State generate $n{=}10$ banal alternatives $S_2^{*1},\dots,S_2^{*n}$ of $S_t$ \Comment{from $S_1$, temperature $1$}
+  \For{$S_3 \in \{\,\textsc{next}=S_{t+1},\ \ \textsc{all}=S_{t+1}\cdots S_k\,\}$}
+    \State $P \gets P(S_3\mid S_1,S_t)$ \Comment{posterior, per token}
+    \State $Q \gets \frac1n\sum_i P(S_3\mid S_1,S_2^{*i})$ \Comment{prior, per token}
+    \State $\mathrm{nt} \gets \log(P/Q)$ \Comment{the score}
+  \EndFor
+\EndFor
+\end{algorithmic}
+\end{algorithm}
+
+\textbf{Outputs.} The \textbf{main file} \col{<name>.xlsx} has one row per
+sentence and the score under each continuation mode:
+\begin{center}
+\begin{tabular}{@{}>{\ttfamily}l l@{}}
+\toprule
+\normalfont\textbf{Column} & \textbf{Meaning} \\
+\midrule
+nt\_next\ \textnormal{(NT$_A$)} & score with $S_3=S_{t+1}$ (next sentence only): $\ \log\!\big(P(S_{t+1}\mid S_1,S_2)/Q\big)$. \\
+nt\_all\ \textnormal{(NT$_B$)}  & score with $S_3=S_{t+1}\cdots S_k$ (all following sentences): $\ \log\!\big(P(S_{t+1\cdots k}\mid S_1,S_2)/Q\big)$. \\
+\bottomrule
+\end{tabular}
+\end{center}
+The \textbf{debug file} \col{<name>\_debug.xlsx} expands this (one row per
+sentence \emph{and} mode), with the intermediate values --- columns below.
+
+\section*{Debug file columns}
+\begin{center}
+\begin{tabular}{@{}>{\ttfamily}l l l@{}}
+\toprule
+\normalfont\textbf{Column} & \textbf{Meaning} & \textbf{Formula} \\
+\midrule
+participant & Participant ID. & --- \\
+story       & Which story (\col{story}, or \col{text\_1}/\col{text\_2}). & --- \\
+sent\_idx   & Position of $S_2$ ($1=$ 2nd sentence; first/last never scored). & --- \\
+sentence    & Text of the target sentence $S_2$. & --- \\
+s3\_mode    & Continuation: \col{next} ($S_{t+1}$) or \col{all} ($S_{t+1}\cdots S_k$). & --- \\
+nt          & The score. & $\log(P/Q)=\col{log\_post}-\col{log\_prior}$ \\
+log\_post   & Per-token log-prob of $S_3$ with the real $S_2$. & $\log P(S_3\mid S_1,S_2)$ \\
+log\_prior  & Log of the mean prior over alternatives. & $\log Q$ \\
+ratio       & How many times more likely $S_3$ is. & $P/Q=e^{\,\col{log\_post}-\col{log\_prior}}$ \\
+num\_alternatives & Number of banal alternatives $S_2^{*}$ used to estimate $Q$. & --- \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\section*{Alternatives file (validity check)}
+\col{<name>\_alternatives.xlsx} lists, for every sentence and mode, the real
+sentence and each generated banal alternative $S_2^{*}$, with its own
+continuation log-probability --- so one can check that the real sentence beats
+the banal ones.
+\begin{center}
+\begin{tabular}{@{}>{\ttfamily}l l@{}}
+\toprule
+\normalfont\textbf{Column} & \textbf{Meaning} \\
+\midrule
+role     & \col{real\_S2} (the actual sentence) or \col{alternative} (a generated $S_2^{*}$). \\
+alt\_id  & $0$ for the real sentence; $1,2,\dots$ for the alternatives. \\
+sentence & Text of the real sentence or of the alternative. \\
+log\_prob & Per-token $\log P(S_3\mid S_1,\cdot)$: \col{log\_post} for the real, the prior for an alternative. \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\textbf{How the columns relate} (a self-check, true on every row):
+\begin{itemize}\setlength{\itemsep}{1pt}
+  \item the score is just the difference of the two log-probabilities:
+        $\;\col{nt}=\col{log\_post}-\col{log\_prior}\;$ (because $\log P-\log Q=\log(P/Q)$);
+  \item \col{ratio} is the same thing on the ordinary (non-log) scale:
+        $\;\col{ratio}=e^{\,\col{nt}}=P/Q\;$ (how many times more likely $S_3$ is with the real $S_2$).
+\end{itemize}
+
+\end{document}

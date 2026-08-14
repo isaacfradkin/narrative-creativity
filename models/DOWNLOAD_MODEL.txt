@@ -1,0 +1,8 @@
+The model file is not included in this archive (~4.2 GB).
+
+Download the GGUF quantized Hebrew-Mistral-7B and place it here as:
+    models/Hebrew-Mistral-7B.Q4_K_M.gguf
+
+Base model: https://huggingface.co/yam-peleg/Hebrew-Mistral-7B
+(use the Q4_K_M GGUF quantization). The code expects exactly this path,
+or pass a different one with:  --model /path/to/model.gguf

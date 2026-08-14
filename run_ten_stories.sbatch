@@ -7,7 +7,9 @@
 #SBATCH --time=02:00:00
 #SBATCH --output=logs/nt_ten_stories_%j.out
 
-cd /sci/labs/arieljaffe/dan.abergel1/narrative-creativity
+# Run from the directory where sbatch was invoked (the project root),
+# so the script works from any user's copy of the repo.
+cd "$SLURM_SUBMIT_DIR"
 
 # CUDA runtime libs installed via pip (libcudart, libcublas); libcuda.so.1
 # comes from the GPU node's driver.

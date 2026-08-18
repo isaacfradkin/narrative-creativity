@@ -104,7 +104,7 @@ class HFBackend:
         token_logprobs = pred_logprobs.gather(1, target_ids.unsqueeze(-1)).squeeze(-1)
         return token_logprobs.sum().item(), token_logprobs.shape[0]
 
-    def generate_alternatives(self, s1: str, n_alternatives: int, max_new_tokens: int = 20,
+    def generate_alternatives(self, s1: str, n_alternatives: int, max_new_tokens: int = 50,
                               temperature: float = 1.0, top_k: int = 50,
                               seed: Optional[int] = None) -> List[str]:
         """Generate up to `n_alternatives` banal sentences that could follow S1.
@@ -181,7 +181,7 @@ class LlamaCppBackend:
             total_logp += logits[tok_id] - log_sum_exp
         return total_logp, len(cont_tokens)
 
-    def generate_alternatives(self, s1: str, n_alternatives: int, max_new_tokens: int = 30,
+    def generate_alternatives(self, s1: str, n_alternatives: int, max_new_tokens: int = 50,
                               temperature: float = 1.0, top_k: int = 50,
                               seed: Optional[int] = None) -> List[str]:
         """Generate up to `n_alternatives` banal continuations of S1 (one per call).

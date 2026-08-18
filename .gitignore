@@ -5,15 +5,11 @@ venv/
 .env
 .ipynb_checkpoints/
 .DS_Store
-data/
 
 # Model files (~4.2 GB) and their download cache
 models/*.gguf
 models/.cache/
 
 # Derived outputs and local session files
-ten_stories_NT*.xlsx
-all_NT*.xlsx
-logs/
 .Rhistory
 .claude/
